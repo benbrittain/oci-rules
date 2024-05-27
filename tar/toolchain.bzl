@@ -1,6 +1,6 @@
 TarToolchainInfo = provider(
     fields = {
-        "tar_file": typing.Any,
+        "tar": typing.Any,
     },
 )
 
@@ -11,15 +11,15 @@ def tar_toolchain_impl(ctx) -> list[[DefaultInfo, TarToolchainInfo]]:
     return [
         DefaultInfo(),
         TarToolchainInfo(
-            tar_file = ctx.attrs._tar_file,
+            tar = ctx.attrs._tar,
         ),
     ]
 
 tar_toolchain = rule(
     impl = tar_toolchain_impl,
     attrs = {
-        "_tar_file": attrs.dep(
-            default = "root//tar:tar_file.py",
+        "_tar": attrs.exec_dep(
+            default = "root//tar/helpers:tar",
         ),
     },
     is_toolchain_rule = True,

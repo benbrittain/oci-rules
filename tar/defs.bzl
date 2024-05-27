@@ -14,12 +14,7 @@ def _tar_file_impl(ctx: AnalysisContext) -> list[Provider]:
 
     srcs_file_path = ctx.actions.write("srcs.txt", srcs_file_cmd)
 
-    tar_toolchain = ctx.attrs._tar_toolchain[TarToolchainInfo]
-
-    cmd = cmd_args(
-        ctx.attrs._python_toolchain[PythonToolchainInfo].interpreter,
-        tar_toolchain.tar_file[DefaultInfo].default_outputs,
-    )
+    cmd = cmd_args(ctx.attrs._tar_toolchain[TarToolchainInfo].tar[RunInfo])
     cmd.add("--compress")
     cmd.add("true" if ctx.attrs.compress else "false")
     cmd.add("--file_path")
@@ -38,10 +33,6 @@ tar_file = rule(
         "compress": attrs.bool(default = False),
         "srcs": attrs.list(attrs.source()),
         "out": attrs.option(attrs.string(), default = None),
-        "_python_toolchain": attrs.toolchain_dep(
-            default = "toolchains//:python",
-            providers = [PythonToolchainInfo],
-        ),
         "_tar_toolchain": attrs.toolchain_dep(
             default = "toolchains//:tar",
             providers = [TarToolchainInfo],
