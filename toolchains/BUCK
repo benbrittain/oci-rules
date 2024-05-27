@@ -1,4 +1,22 @@
 load("@prelude//toolchains:demo.bzl", "system_demo_toolchains")
+load("@root//oci:toolchain.bzl", "oci_toolchain", "download_crane_binary")
+load("@root//tar:toolchain.bzl", "tar_toolchain")
+
+tar_toolchain(
+    name="tar",
+    visibility=["PUBLIC"],
+)
+
+download_crane_binary(
+    name = "crane",
+    version = "0.19.1",
+)
+
+oci_toolchain(
+    name = "oci",
+    crane = ":crane",
+    visibility = ["PUBLIC"],
+)
 
 # All the default toolchains, suitable for a quick demo or early prototyping.
 # Most real projects should copy/paste the implementation to configure them.

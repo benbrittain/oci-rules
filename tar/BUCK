@@ -1,0 +1,6 @@
+# TODO convert to py_binary
+
+export_file(
+    name="tar_file.py",
+    visibility=["PUBLIC"],
+)
