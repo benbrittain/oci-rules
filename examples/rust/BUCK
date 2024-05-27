@@ -1,18 +1,16 @@
 load("@oci//oci:defs.bzl", "oci_pull", "oci_image")
 load("@oci//tar:defs.bzl", "tar_file")
 
-http_archive(
-  name="dive",
-  urls=["https://github.com/wagoodman/dive/releases/download/v0.12.0/dive_0.12.0_linux_arm64.tar.gz"],
-  sha256="a2a1470302cdfa367a48f80b67bbf11c0cd8039af9211e39515bd2bbbda58fea",
-  #  strip_prefix='dive',
-  sub_targets=["dive"],
+rust_binary(
+    name = "rust-app",
+    srcs = ["src/main.rs"],
+    crate_root = "src/main.rs",
 )
 
 tar_file(
-  name = "dive-tar",
-  srcs = [":dive[dive]"],
-  out = "dive.tar",
+  name = "app",
+  srcs = [":rust-app[static]"],
+  out = "app.tar",
 )
 
 oci_pull(
@@ -25,6 +23,6 @@ oci_pull(
 oci_image(
   name = "image",
   base = ":distroless",
-  tars = [":dive-tar"],
-  entrypoint = ["/dive"],
+  tars = [":app"],
+  entrypoint = ["/rust_app"],
 )
