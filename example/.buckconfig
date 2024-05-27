@@ -1,0 +1,25 @@
+[cells]
+root = .
+prelude = prelude
+toolchains = toolchains
+none = none
+oci = oci
+
+[cell_aliases]
+config = prelude
+ovr_config = prelude
+fbcode = none
+fbsource = none
+fbcode_macros = none
+buck = none
+
+[external_cells]                                           
+prelude = bundled
+oci = git
+
+[external_cell_oci]                                        
+git_origin = https://github.com/benbrittain/oci-rules.git
+commit_hash = 27e4a388104ccaada58fd211c635561ac21ddd3a
+
+[parser]
+target_platform_detector_spec = target:root//...->prelude//platforms:default
