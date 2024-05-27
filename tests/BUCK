@@ -4,6 +4,7 @@ load("//tar:defs.bzl", "tar_file")
 export_file(
     name = "test_sh",
     src = "test.sh",
+    out = "test.sh",
 )
 
 tar_file(
@@ -13,15 +14,18 @@ tar_file(
 )
 
 oci_pull(
-    name = "distroless",
-    image = "gcr.io/distroless/base",
-    digest = "sha256:ccaef5ee2f1850270d453fdf700a5392534f8d1a8ca2acda391fbb6a06b81c86",
-    platforms = ["linux/arm64"],
+    name = "alpine",
+    image = "docker.io/library/alpine:3.20.0",
+    digest = "sha256:216266c86fc4dcef5619930bd394245824c2af52fd21ba7c6fa0e618657d4c3b",
+    platforms = ["linux/amd64"],
 )
 
 oci_image(
     name = "image",
-    base = ":distroless",
+    base = ":alpine",
     tars = [":app"],
-    entrypoint = ["/test.sh"],
+    env = {
+      "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+    },
+    entrypoint=["./test.sh"],
 )
