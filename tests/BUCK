@@ -1,0 +1,27 @@
+load("//oci:defs.bzl", "oci_image", "oci_pull")
+load("//tar:defs.bzl", "tar_file")
+
+export_file(
+    name = "test_sh",
+    src = "test.sh",
+)
+
+tar_file(
+    name = "app",
+    srcs = [":test_sh"],
+    out = "test.tar",
+)
+
+oci_pull(
+    name = "distroless",
+    image = "gcr.io/distroless/base",
+    digest = "sha256:ccaef5ee2f1850270d453fdf700a5392534f8d1a8ca2acda391fbb6a06b81c86",
+    platforms = ["linux/arm64"],
+)
+
+oci_image(
+    name = "image",
+    base = ":distroless",
+    tars = [":app"],
+    entrypoint = ["/test.sh"],
+)
