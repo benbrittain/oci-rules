@@ -1,5 +1,5 @@
 load("@prelude//python:toolchain.bzl", "PythonToolchainInfo")
-load("@root//tar:toolchain.bzl", "TarToolchainInfo")
+load("//tar:toolchain.bzl", "TarToolchainInfo")
 
 def _tar_file_impl(ctx: AnalysisContext) -> list[Provider]:
     tar_output_name = (
