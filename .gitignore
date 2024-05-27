@@ -1,1 +1,3 @@
 buck-out/
+*.tar.gz
+*.tar

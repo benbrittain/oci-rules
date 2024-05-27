@@ -22,13 +22,13 @@ Add this repo as an external cell in your projects `.buckconfig`
 
 ### Configuring the toolchain
 
-The OCI rules depend on a container manipulation tool called [crane](https://github.com/google/go-containerregistry/blob/main/cmd/crane/doc/crane.md). You must define the `oci_toolchain` rule in your projects `//toolchains`.
+The OCI rules depend on a container manipulation tool called [crane](https://github.com/google/go-containerregistry/blob/main/cmd/crane/doc/crane.md). You must define the `oci_toolchain` rule in your `//toolchains` cell.
 
 Example:
 ```starlark
 load("@oci//oci:toolchain.bzl", "oci_toolchain", "download_crane_binary")
 
-# Helper macro for fetching the crane binary needed based on platform arch
+# Optional helper macro for fetching the crane binary based on platform arch
 download_crane_binary(                      
     name = "crane",                         
     version = "0.19.1",                     
