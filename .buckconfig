@@ -10,6 +10,9 @@ fbcode = none
 fbsource = none
 buck = none
 
+[project]
+ignore = .git, examples
+
 [external_cells]
 prelude = bundled
 
