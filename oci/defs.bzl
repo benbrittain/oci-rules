@@ -6,15 +6,10 @@ def _oci_pull_impl(ctx: AnalysisContext) -> list[Provider]:
     output = ctx.actions.declare_output("{}.tar".format(ctx.attrs.name))
     platform = ctx.attrs.platforms[0]
 
-    python = ctx.attrs._python_toolchain[PythonToolchainInfo].interpreter
-    pull_py = ctx.attrs._oci_toolchain[OciToolchainInfo].pull_py[DefaultInfo].default_outputs
-    crane = ctx.attrs._oci_toolchain[OciToolchainInfo].crane[RunInfo]
-
     cmd = cmd_args(
-        python,
-        pull_py,
+        ctx.attrs._pull[RunInfo],
         "--crane",
-        crane,
+        ctx.attrs._oci_toolchain[OciToolchainInfo].crane[RunInfo],
         "--platform",
         platform,
         "--output",
@@ -35,10 +30,7 @@ oci_pull = rule(
         "digest": attrs.string(),
         "image": attrs.string(),
         "platforms": attrs.list(attrs.string()),
-        "_python_toolchain": attrs.toolchain_dep(
-            default = "toolchains//:python",
-            providers = [PythonToolchainInfo],
-        ),
+        "_pull": attrs.default_only(attrs.exec_dep(default = "//oci/helpers:pull")),
         "_oci_toolchain": attrs.toolchain_dep(
             default = "toolchains//:oci",
             providers = [OciToolchainInfo],
@@ -55,15 +47,10 @@ def _oci_image_impl(ctx: AnalysisContext) -> list[Provider]:
     entrypoint = ctx.attrs.entrypoint
 
     output = ctx.actions.declare_output("{}.tar".format(ctx.attrs.name))
-    python = ctx.attrs._python_toolchain[PythonToolchainInfo].interpreter
-    image_py = ctx.attrs._oci_toolchain[OciToolchainInfo].image_py[DefaultInfo].default_outputs
-    crane = ctx.attrs._oci_toolchain[OciToolchainInfo].crane[RunInfo]
-
     cmd = cmd_args(
-        python,
-        image_py,
+        ctx.attrs._image[RunInfo],
         "--crane",
-        crane,
+        ctx.attrs._oci_toolchain[OciToolchainInfo].crane[RunInfo],
         "--output",
         output.as_output(),
         "--base",
@@ -87,10 +74,7 @@ oci_image = rule(
         "tars": attrs.list(attrs.dep()),
         # TODO(dmiller): I'm not sure if this data type is correct
         "entrypoint": attrs.option(attrs.list(attrs.string())),
-        "_python_toolchain": attrs.toolchain_dep(
-            default = "toolchains//:python",
-            providers = [PythonToolchainInfo],
-        ),
+        "_image": attrs.default_only(attrs.exec_dep(default = "//oci/helpers:image")),
         "_oci_toolchain": attrs.toolchain_dep(
             default = "toolchains//:oci",
             providers = [OciToolchainInfo],

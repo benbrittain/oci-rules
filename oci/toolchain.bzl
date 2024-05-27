@@ -112,8 +112,6 @@ def download_crane_binary(
 
 OciToolchainInfo = provider(fields = {
     "crane": typing.Any,
-    "pull_py": typing.Any,
-    "image_py": typing.Any,
 })
 
 def _oci_toolchain_impl(ctx) -> list[[DefaultInfo, OciToolchainInfo]]:
@@ -121,8 +119,6 @@ def _oci_toolchain_impl(ctx) -> list[[DefaultInfo, OciToolchainInfo]]:
         DefaultInfo(),
         OciToolchainInfo(
             crane = ctx.attrs.crane,
-            pull_py = ctx.attrs._pull_py,
-            image_py = ctx.attrs._image_py,
         ),
     ]
 
@@ -130,12 +126,6 @@ oci_toolchain = rule(
     impl = _oci_toolchain_impl,
     attrs = {
         "crane": attrs.exec_dep(providers = [RunInfo]),
-        "_pull_py": attrs.dep(
-            default = "root//oci:pull.py",
-        ),
-        "_image_py": attrs.dep(
-            default = "root//oci:image.py",
-        ),
     },
     is_toolchain_rule = True,
 )
