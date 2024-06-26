@@ -40,7 +40,7 @@ def _oci_image_impl(ctx: AnalysisContext) -> list[Provider]:
       command.add(["--env", f"{k}={v}"])
     command.add([ "--name", image_name])
 
-    ctx.actions.run(command, category = "oci", always_print_stderr = True)
+    ctx.actions.run(command, category = "oci")
 
     return [DefaultInfo(default_output = output)]
 
