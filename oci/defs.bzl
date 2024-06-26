@@ -1,4 +1,3 @@
-load("@prelude//python:toolchain.bzl", "PythonToolchainInfo")
 load("//oci:toolchain.bzl", "OciToolchainInfo")
 
 def _oci_pull_impl(ctx: AnalysisContext) -> list[Provider]:

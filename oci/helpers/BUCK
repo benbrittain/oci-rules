@@ -1,11 +1,11 @@
 python_binary(
-  name = 'pull',
-  main = "pull.py",
-  visibility = ["PUBLIC"],
+    name = "pull",
+    main = "pull.py",
+    visibility = ["PUBLIC"],
 )
 
 python_binary(
-  name = 'image',
-  main = "image.py",
-  visibility = ["PUBLIC"],
+    name = "image",
+    main = "image.py",
+    visibility = ["PUBLIC"],
 )

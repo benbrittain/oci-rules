@@ -1,4 +1,3 @@
-load("@prelude//python:toolchain.bzl", "PythonToolchainInfo")
 load("//tar:toolchain.bzl", "TarToolchainInfo")
 
 def _tar_file_impl(ctx: AnalysisContext) -> list[Provider]:
