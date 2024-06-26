@@ -20,44 +20,46 @@ def stop_registry(registry_process):
     registry_process.terminate()
     registry_process.wait()
 
-def build_image(crane_path, base_image_path, tar_files, entrypoint, cmd, output, name, envs):
+def build_image(crane_path, base_image_path, tar_files, entrypoint, cmd, output, user, workdir, name, envs):
     # get last part of base_image path
     base_image = base_image_path.split("/")[-1]
     registry_base_image = f"localhost:{REGISTRY_PORT}/{base_image}"
+    registry_image = f"localhost:{REGISTRY_PORT}/{name}"
 
+    # Push the base image to the local registry
     push_base_image_command = [crane_path, 'push', base_image_path, registry_base_image]
     eprint(f"Pushing base image: {push_base_image_command}")
     subprocess.run(push_base_image_command, check=True)
 
-    registry_image = f"localhost:{REGISTRY_PORT}/{name}"
+    # Delete the cached image from the local registry.
+    # It is ok if the command fails since the image may not be cached.
     delete_image_command = [crane_path, 'delete', registry_image]
     eprint(f"Deleting image: {delete_image_command}")                                      
-    subprocess.run(delete_image_command, check=True)
+    subprocess.run(delete_image_command)
 
+    # Append all layers to the base image
     append_layer_command = [crane_path, 'append', '-t', registry_image, '-f', ",".join(tar_files), '-b', registry_base_image]
     eprint(f"Appending layers: {append_layer_command}")
     subprocess.run(append_layer_command, check=True)
 
     args = []
     for env in envs:
-        eprint(env)
         args.append(f"--env={env}")
     if entrypoint:
         args.append(f"--entrypoint={entrypoint}")
     if cmd:
         args.append(f"--cmd={cmd}")
-    if cmd:
-        config_command = [crane_path, 'mutate', '--cmd', cmd, registry_image]
-        eprint(f"Setting entrypoint: {config_command}")
-        subprocess.run(config_command, check=True)
-
-
+    if user:
+        args.append(f"--user={user}")
+    if workdir:
+        args.append(f"--workdir={workdir}")
 
     # Use the mutate command to output the image without doing any mutation
     config_command = [crane_path, 'mutate', registry_image, '-o', output] + args
     eprint(f"Generating new image: {config_command}")
     subprocess.run(config_command, check=True)
 
+    # Valide the tarball
     config_command = [crane_path, 'validate', '--tarball', output]
     eprint(f"Validating tarball is a well formed image: {config_command}")
     subprocess.run(config_command, check=True)
@@ -72,6 +74,8 @@ if __name__ == "__main__":
     parser.add_argument("--cmd", nargs='+', help="Command for the OCI image")
     parser.add_argument("--output", required=True, help="Path to the output tar file")
     parser.add_argument("--name", required=True, help="Name of the OCI image")
+    parser.add_argument("--user", help="User")
+    parser.add_argument("--workdir", help="Working directory")
     args = parser.parse_args()
 
     log_file = tempfile.TemporaryFile()
@@ -79,7 +83,7 @@ if __name__ == "__main__":
 
     try:
         registry_process = start_registry(args.crane, log_file)
-        build_image(args.crane, args.base, args.tars, ' '.join(args.entrypoint) if args.entrypoint else None, ' '.join(args.cmd) if args.cmd else None, args.output, args.name, args.env)
+        build_image(args.crane, args.base, args.tars, ' '.join(args.entrypoint) if args.entrypoint else None, ' '.join(args.cmd) if args.cmd else None, args.output, args.user, args.workdir, args.name, args.env)
     except subprocess.CalledProcessError as e:
         eprint(f"Error: {e}", file=sys.stderr)
     finally:
