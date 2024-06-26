@@ -43,8 +43,9 @@ def build_image(crane_path, base_image_path, tar_files, entrypoint, cmd, output,
     subprocess.run(append_layer_command, check=True)
 
     args = []
-    for env in envs:
-        args.append(f"--env={env}")
+    if envs:
+        for env in envs:
+            args.append(f"--env={env}")
     if entrypoint:
         args.append(f"--entrypoint={entrypoint}")
     if cmd:
