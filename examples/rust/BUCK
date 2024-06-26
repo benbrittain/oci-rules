@@ -15,14 +15,14 @@ tar_file(
 
 oci_pull(
   name = "distroless",
-  image = "gcr.io/distroless/base",
-  digest = "sha256:ccaef5ee2f1850270d453fdf700a5392534f8d1a8ca2acda391fbb6a06b81c86",
+  image = "gcr.io/distroless/cc-debian12",
+  digest = "sha256:388145607c79313a1e49b783a7ee71e4ef3df31d87c45adb46bfb9b257b643d1",
   platforms = ["linux/arm64"],
 )
 
 oci_image(
-  name = "image",
+  name = "rust-image",
   base = ":distroless",
   tars = [":app"],
-  entrypoint = ["/rust_app"],
+  entrypoint = ["./rust_app"],
 )
