@@ -42,8 +42,14 @@ oci_toolchain(
 )                                                  
 ```
 
+
+## Documentation
+TODO: Render documentation from starlark here
+
 ## Example
 ```bash
 $ buckle build //tests:image --out - | podman load
 $ podman run -it --rm localhost:61978/image.tar:latest
 ```
+
+
