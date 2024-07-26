@@ -7,20 +7,20 @@ def _tar_file_impl(ctx: AnalysisContext) -> list[Provider]:
     tar_file = ctx.actions.declare_output(tar_output_name)
     srcs = ctx.attrs.srcs
 
-    srcs_file_cmd = cmd_args()
-    for src in srcs:
-        srcs_file_cmd.add(src)
+    # newline-separated list of source files
+    srcs_file_path = ctx.actions.write("srcs.txt", cmd_args(srcs))
 
-    srcs_file_path = ctx.actions.write("srcs.txt", srcs_file_cmd)
-
-    cmd = cmd_args(ctx.attrs._tar_toolchain[TarToolchainInfo].tar[RunInfo])
-    cmd.add("--compress")
-    cmd.add("true" if ctx.attrs.compress else "false")
-    cmd.add("--file_path")
-    cmd.add(srcs_file_path)
-    cmd.add("--filename")
-    cmd.add(tar_file.as_output())
-    cmd.hidden(srcs)
+    # this is not GNU tar. don't look these flags up in the manual.
+    cmd = cmd_args(
+        ctx.attrs._tar_toolchain[TarToolchainInfo].tar[RunInfo],
+        "--compress",
+        "true" if ctx.attrs.compress else "false",
+        "--file_path",
+        srcs_file_path,
+        "--filename",
+        tar_file.as_output(),
+        hidden = srcs,
+    )
 
     ctx.actions.run(cmd, category = "tar")
 

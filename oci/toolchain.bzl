@@ -60,10 +60,7 @@ def _crane_binary_impl(ctx: AnalysisContext) -> list[Provider]:
     src = ctx.attrs.bin[DefaultInfo].default_outputs[0]
     ctx.actions.run(["cp", cmd_args(src, format = "{}/crane"), dst.as_output()], category = "cp_crane")
 
-    crane = cmd_args([dst])
-    crane.hidden()
-    crane.hidden(ctx.attrs.bin[DefaultInfo].default_outputs)
-    crane.hidden(ctx.attrs.bin[DefaultInfo].other_outputs)
+    crane = cmd_args([dst], hidden = ctx.attrs.bin[DefaultInfo].default_outputs + ctx.attrs.bin[DefaultInfo].other_outputs)
 
     return [
         ctx.attrs.bin[DefaultInfo],
