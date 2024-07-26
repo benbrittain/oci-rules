@@ -48,7 +48,7 @@ TODO: Render documentation from starlark here
 
 ## Example
 ```bash
-$ buckle build //tests:image --out - | podman load
+$ buckle build //tests:image --show-simple-output | xargs podman load -i
 $ podman run -it --rm localhost:61978/image.tar:latest
 ```
 
