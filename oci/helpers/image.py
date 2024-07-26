@@ -56,14 +56,15 @@ def build_image(crane_path, base_image_path, tar_files, entrypoint, cmd, output,
         args.append(f"--workdir={workdir}")
 
     # Use the mutate command to output the image without doing any mutation
-    config_command = [crane_path, 'mutate', registry_image, '-o', output] + args
+    # crate mutate does not support directly writing oci with the -o flag
+    # so we must mutate then pull --format=oci
+    config_command = [crane_path, 'mutate', registry_image] + args
     eprint(f"Generating new image: {config_command}")
     subprocess.run(config_command, check=True)
 
-    # Valide the tarball
-    config_command = [crane_path, 'validate', '--tarball', output]
-    eprint(f"Validating tarball is a well formed image: {config_command}")
-    subprocess.run(config_command, check=True)
+    pull_command = [crane_path, 'pull', '--format=oci', registry_image, output]
+    eprint(f"Pulling mutated image back to filesystem: {pull_command}")
+    subprocess.run(pull_command, check=True)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Build OCI image using Crane")
@@ -73,7 +74,7 @@ if __name__ == "__main__":
     parser.add_argument("--env", nargs='+', required=False, help="Environment variables")
     parser.add_argument("--entrypoint", nargs='+', help="Entrypoint for the OCI image")
     parser.add_argument("--cmd", nargs='+', help="Command for the OCI image")
-    parser.add_argument("--output", required=True, help="Path to the output tar file")
+    parser.add_argument("--output", required=True, help="Path to the output OCI image directory")
     parser.add_argument("--name", required=True, help="Name of the OCI image")
     parser.add_argument("--user", help="User")
     parser.add_argument("--workdir", help="Working directory")
