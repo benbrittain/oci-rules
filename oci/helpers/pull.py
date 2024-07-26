@@ -6,7 +6,7 @@ def pull_image(crane_path, image, digest, platform, output):
     full_image = f"{image}@{digest}"
 
     # Construct and execute the crane pull command
-    command = [crane_path, 'pull', '--platform', platform, full_image, output]
+    command = [crane_path, 'pull', '--format=oci', '--platform', platform, full_image, output]
     subprocess.run(command, check=True)
 
 if __name__ == "__main__":

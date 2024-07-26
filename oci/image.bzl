@@ -7,7 +7,7 @@ def _oci_image_impl(ctx: AnalysisContext) -> list[Provider]:
     tars = ctx.attrs.tars
     tar_outputs = [tar[DefaultInfo].default_outputs for tar in tars]
 
-    image_name = "{}.tar".format(ctx.attrs.name)
+    image_name = ctx.attrs.name
 
     output = ctx.actions.declare_output(image_name)
 

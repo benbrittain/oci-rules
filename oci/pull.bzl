@@ -2,7 +2,7 @@ load("//oci:toolchain.bzl", "OciToolchainInfo")
 
 def _oci_pull_impl(ctx: AnalysisContext) -> list[Provider]:
     image = ctx.attrs.image
-    output = ctx.actions.declare_output("{}.tar".format(ctx.attrs.name))
+    output = ctx.actions.declare_output(ctx.attrs.name)
     platform = ctx.attrs.platforms[0]
 
     cmd = cmd_args(
