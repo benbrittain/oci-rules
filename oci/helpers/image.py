@@ -86,7 +86,7 @@ if __name__ == "__main__":
         registry_process = start_registry(args.crane, log_file)
         build_image(args.crane, args.base, args.tars, ' '.join(args.entrypoint) if args.entrypoint else None, ' '.join(args.cmd) if args.cmd else None, args.output, args.user, args.workdir, args.name, args.env)
     except subprocess.CalledProcessError as e:
-        eprint(f"Error: {e}", file=sys.stderr)
+        eprint(f"Error: {e}")
     finally:
         if registry_process:
             stop_registry(registry_process)
