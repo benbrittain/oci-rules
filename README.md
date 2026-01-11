@@ -17,7 +17,7 @@ Add this repo as an external cell in your projects `.buckconfig`
 
 [external_cell_oci]
   git_origin = https://github.com/benbrittain/oci-rules.git
-  commit_hash = 7cda0ad213b2108f50beb756697f3c5435ad2c56
+  commit_hash = <set this to latest main branch commit hash>
 ```
 
 ### Configuring the toolchain
