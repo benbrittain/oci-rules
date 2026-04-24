@@ -19,8 +19,7 @@ def _oci_image_impl(ctx: AnalysisContext) -> list[Provider]:
         output.as_output(),
         "--base",
         base,
-        "--tars",
-        tar_outputs,
+        cmd_args("--tars", tar_outputs) if tar_outputs else cmd_args(),
     )
 
     entrypoint = ctx.attrs.entrypoint
@@ -28,29 +27,29 @@ def _oci_image_impl(ctx: AnalysisContext) -> list[Provider]:
     user = ctx.attrs.user
     cmd = ctx.attrs.cmd
 
-    if entrypoint:
+    if entrypoint != None:
       command.add(["--entrypoint", ",".join(entrypoint)])
-    if workdir:
+    if workdir != None:
       command.add(["--workdir", workdir])
-    if user:
+    if user != None:
       command.add(["--user", workdir])
-    if cmd:
-      command.add(["--cmd", " ".join(cmd)])
+    if cmd != None:
+      command.add(["--cmd", ",".join(cmd)])
     for k, v in ctx.attrs.env.items():
-      command.add(["--env", f"{k}={v}"])
+      command.add(["--env", "{}={}".format(k, v)])
     command.add([ "--name", image_name])
 
     ctx.actions.run(command, category = "oci")
 
-    return [DefaultInfo(default_output = output)]
+    return [ DefaultInfo(default_output = output) ]
 
 oci_image = rule(
     impl = _oci_image_impl,
     attrs = {
-        "base": attrs.dep(),
+        "base": attrs.dep(providers = [DefaultInfo]),
         "workdir": attrs.option(attrs.string(), default = None),
         "user": attrs.option(attrs.string(), default = None),
-        "tars": attrs.list(attrs.dep()),
+        "tars": attrs.list(attrs.dep(), default = []),
         "env": attrs.dict(key=attrs.string(), value=attrs.string(), default = {}),
         "cmd": attrs.option(attrs.list(attrs.string()), default = None),
         "entrypoint": attrs.option(attrs.list(attrs.string()), default = None),

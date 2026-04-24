@@ -5,11 +5,12 @@ rust_binary(
     name = "rust-app",
     srcs = ["src/main.rs"],
     crate_root = "src/main.rs",
+    link_style = "static",
 )
 
 tar_file(
   name = "app",
-  srcs = [":rust-app[static]"],
+  srcs = [":rust-app"],
   out = "app.tar",
 )
 
