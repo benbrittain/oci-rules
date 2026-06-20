@@ -1,5 +1,6 @@
 import argparse
 import gzip
+import json
 import os
 import sys
 import tarfile
@@ -13,34 +14,71 @@ def reset(ti: tarfile.TarInfo) -> tarfile.TarInfo:
     return ti
 
 
-def add_path(tar: tarfile.TarFile, path: str, arcname: str):
-    ti = reset(tar.gettarinfo(path, arcname))
-    if ti.isdir():
-        tar.addfile(ti)
-        for name in sorted(os.listdir(path)):
-            add_path(tar, os.path.join(path, name), arcname + "/" + name)
-    elif ti.isreg():
-        with open(path, "rb") as f:
-            tar.addfile(ti, f)
+def parents(arcname):
+    """Ancestor directory arcnames of `arcname`, outermost first."""
+    parts = arcname.strip("/").split("/")[:-1]
+    out, cur = [], ""
+    for part in parts:
+        cur = part if not cur else cur + "/" + part
+        out.append(cur)
+    return out
+
+
+def collect(src, arcname, mode, members):
+    """Record `src` under `arcname`, recursing into directories.
+
+    Symlinks are dereferenced via realpath so the layer carries real bytes
+    rather than links into the build sandbox.
+    """
+    src = os.path.realpath(src)
+    if os.path.isdir(src):
+        members.setdefault(arcname, (None, None))
+        for name in sorted(os.listdir(src)):
+            collect(os.path.join(src, name), arcname + "/" + name, None, members)
     else:
-        tar.addfile(ti)
+        members[arcname] = (src, mode)
 
 
-def create_tar(paths, compress, filename):
+def create_tar(manifest, compress, filename):
+    members = {}
+    for entry in manifest:
+        collect(entry["src"], entry["arcname"].strip("/"), entry.get("mode"), members)
+
+    # Synthesise parent directories so the layer carries explicit entries.
+    for arcname in list(members):
+        for parent in parents(arcname):
+            members.setdefault(parent, (None, None))
+
     raw_fobj = gz = None
     if compress == "true":
-        # Pass an explicit fileobj so the gzip header carries no filename, and
-        # mtime=0 so the compressed stream is reproducible.
+        # filename="" keeps the output name out of the gzip header (otherwise it
+        # is read from fileobj.name), and mtime=0 zeroes the header timestamp, so
+        # the compressed stream is reproducible.
         raw_fobj = open(filename, "wb")
-        gz = gzip.GzipFile(fileobj=raw_fobj, mode="wb", mtime=0)
+        gz = gzip.GzipFile(filename="", fileobj=raw_fobj, mode="wb", mtime=0)
         tar = tarfile.open(fileobj=gz, mode="w|")
     else:
         tar = tarfile.open(filename, "w")
     try:
-        for path in sorted(paths):
-            if not os.path.exists(path):
-                raise FileNotFoundError(f"Path not found: {path}")
-            add_path(tar, path, os.path.basename(path))
+        # Sorting by arcname is deterministic and keeps parents before children.
+        for arcname in sorted(members):
+            src, mode = members[arcname]
+            if src is None:
+                ti = reset(tarfile.TarInfo(arcname + "/"))
+                ti.type = tarfile.DIRTYPE
+                ti.mode = 0o755
+                tar.addfile(ti)
+                continue
+            if not os.path.exists(src):
+                raise FileNotFoundError(f"Path not found: {src}")
+            ti = reset(tar.gettarinfo(src, arcname))
+            if mode:
+                ti.mode = int(mode, 8)
+            if ti.isreg():
+                with open(src, "rb") as f:
+                    tar.addfile(ti, f)
+            else:
+                tar.addfile(ti)
     finally:
         tar.close()
         if gz is not None:
@@ -48,34 +86,32 @@ def create_tar(paths, compress, filename):
             raw_fobj.close()
 
 
-def read_paths(file_path):
+def read_manifest(path):
     try:
-        with open(file_path, "r") as file:
-            return file.read().splitlines()
+        with open(path, "r") as file:
+            return json.load(file)
     except IOError as e:
-        print(f"Failed to read file {file_path}: {e}", file=sys.stderr)
+        print(f"Failed to read manifest {path}: {e}", file=sys.stderr)
         sys.exit(1)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Create a tar file from specified paths"
+        description="Create a deterministic tar from a manifest"
     )
     parser.add_argument(
         "--compress", required=True, help="Whether to gzip the tar file"
     )
     parser.add_argument(
-        "--file_path",
+        "--manifest",
         required=True,
-        help="Path to the file containing paths to include in the tar file",
+        help="Path to a JSON manifest of {arcname, src, mode} entries",
     )
     parser.add_argument("--filename", required=True, help="Name of the tar file")
     args = parser.parse_args()
 
-    paths = read_paths(args.file_path)
-
     try:
-        create_tar(paths, args.compress, args.filename)
+        create_tar(read_manifest(args.manifest), args.compress, args.filename)
     except FileNotFoundError as e:
         print(e, file=sys.stderr)
         sys.exit(1)
