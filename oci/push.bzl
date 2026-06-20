@@ -1,35 +1,27 @@
 load("//oci:toolchain.bzl", "OciToolchainInfo")
 
 def _oci_push_impl(ctx: AnalysisContext) -> list[Provider]:
-    image = ctx.attrs.image
-    output = ctx.actions.declare_output("{}.tar".format(ctx.attrs.name))
-    platform = ctx.attrs.platforms[0]
+    layout = ctx.attrs.image[DefaultInfo].default_outputs[0]
+    crane = ctx.attrs._oci_toolchain[OciToolchainInfo].crane[RunInfo]
 
-    cmd = cmd_args(
-        ctx.attrs._push[RunInfo],
-        "--crane",
-        ctx.attrs._oci_toolchain[OciToolchainInfo].crane[RunInfo],
-        "--platform",
-        platform,
-        "--output",
-        output.as_output(),
-        "--image",
-        image,
-        "--digest",
-        ctx.attrs.digest,
-    )
+    repository = ctx.attrs.repository or ctx.label.package.split("/")[-1]
+    ref = "{}/{}:{}".format(ctx.attrs.registry, repository, ctx.attrs.tag)
 
-    ctx.actions.run(cmd, category = "oci")
+    cmd = cmd_args(crane, "push")
+    if ctx.attrs.insecure:
+        cmd.add("--insecure")
+    cmd.add(layout, ref)
 
-    return [DefaultInfo(default_output = output)]
+    return [DefaultInfo(), RunInfo(args = cmd)]
 
 oci_push = rule(
     impl = _oci_push_impl,
     attrs = {
-        "digest": attrs.string(),
-        "image": attrs.string(),
-        "platforms": attrs.list(attrs.string()),
-        "_push": attrs.default_only(attrs.exec_dep(default = "//oci/helpers:push")),
+        "image": attrs.dep(providers = [DefaultInfo]),
+        "registry": attrs.string(default = "localhost:5000"),
+        "repository": attrs.option(attrs.string(), default = None),
+        "tag": attrs.string(default = "dev"),
+        "insecure": attrs.bool(default = True),
         "_oci_toolchain": attrs.toolchain_dep(
             default = "toolchains//:oci",
             providers = [OciToolchainInfo],

@@ -1,22 +1,17 @@
 load("//oci:toolchain.bzl", "OciToolchainInfo")
 
 def _oci_pull_impl(ctx: AnalysisContext) -> list[Provider]:
-    image = ctx.attrs.image
     output = ctx.actions.declare_output(ctx.attrs.name, dir = True)
-    platform = ctx.attrs.platforms[0]
+    crane = ctx.attrs._oci_toolchain[OciToolchainInfo].crane[RunInfo]
 
     cmd = cmd_args(
-        ctx.attrs._pull[RunInfo],
-        "--crane",
-        ctx.attrs._oci_toolchain[OciToolchainInfo].crane[RunInfo],
+        crane,
+        "pull",
+        "--format=oci",
         "--platform",
-        platform,
-        "--output",
+        ctx.attrs.platforms[0],
+        "{}@{}".format(ctx.attrs.image, ctx.attrs.digest),
         output.as_output(),
-        "--image",
-        image,
-        "--digest",
-        ctx.attrs.digest,
     )
 
     ctx.actions.run(cmd, category = "oci")
@@ -29,7 +24,6 @@ oci_pull = rule(
         "digest": attrs.string(),
         "image": attrs.string(),
         "platforms": attrs.list(attrs.string()),
-        "_pull": attrs.default_only(attrs.exec_dep(default = "//oci/helpers:pull")),
         "_oci_toolchain": attrs.toolchain_dep(
             default = "toolchains//:oci",
             providers = [OciToolchainInfo],
