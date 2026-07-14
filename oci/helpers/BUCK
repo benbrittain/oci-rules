@@ -1,4 +1,4 @@
-python_binary(
+python_bootstrap_binary(
     name = "image",
     main = "image.py",
     visibility = ["PUBLIC"],
