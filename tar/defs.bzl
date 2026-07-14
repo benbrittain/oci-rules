@@ -7,8 +7,9 @@ def _tar_file_impl(ctx: AnalysisContext) -> list[Provider]:
     tar_file = ctx.actions.declare_output(tar_output_name)
 
     # Each manifest entry maps a source to its path inside the archive. `srcs`
-    # land at the root under their basename with their on-disk mode; `files`
-    # place a source at an explicit arcname with an optional mode override.
+    # land at the root under their basename with a normalised mode (0755 if
+    # executable, else 0644); `files` place a source at an explicit arcname
+    # with an optional mode override.
     manifest = [
         {"arcname": src.basename, "mode": None, "src": src}
         for src in ctx.attrs.srcs

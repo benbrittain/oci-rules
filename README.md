@@ -68,8 +68,9 @@ tar_file(
 ```
 
 Parent directories are synthesised automatically, symlinks are dereferenced so
-the layer carries real bytes, and all metadata (mtime, uid/gid) is zeroed so the
-output is byte-reproducible.
+the layer carries real bytes, and all metadata is normalised (mtime, uid/gid
+zeroed; file modes forced to 0644, or 0755 when the source is executable,
+unless `mode` overrides them) so the output is byte-reproducible.
 
 ## Documentation
 TODO: Render documentation from starlark here

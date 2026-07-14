@@ -21,7 +21,7 @@ oci_push = rule(
         "registry": attrs.string(default = "localhost:5000"),
         "repository": attrs.option(attrs.string(), default = None),
         "tag": attrs.string(default = "dev"),
-        "insecure": attrs.bool(default = True),
+        "insecure": attrs.bool(default = False),
         "_oci_toolchain": attrs.toolchain_dep(
             default = "toolchains//:oci",
             providers = [OciToolchainInfo],

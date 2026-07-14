@@ -14,7 +14,7 @@ def _oci_pull_impl(ctx: AnalysisContext) -> list[Provider]:
         output.as_output(),
     )
 
-    ctx.actions.run(cmd, category = "oci")
+    ctx.actions.run(cmd, category = "oci", local_only = True)
 
     return [DefaultInfo(default_output = output)]
 

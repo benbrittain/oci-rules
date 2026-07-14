@@ -38,7 +38,7 @@ oci_image = rule(
         "base": attrs.dep(),
         "workdir": attrs.option(attrs.string(), default = None),
         "user": attrs.option(attrs.string(), default = None),
-        "tars": attrs.list(attrs.dep()),
+        "tars": attrs.list(attrs.dep(), default = []),
         "env": attrs.dict(key = attrs.string(), value = attrs.string(), default = {}),
         "cmd": attrs.option(attrs.list(attrs.string()), default = None),
         "entrypoint": attrs.option(attrs.list(attrs.string()), default = None),

@@ -47,18 +47,50 @@ def resolve_manifest(layout_dir: str) -> dict:
     return node
 
 
+class HashingWriter:
+    """Tees writes into a sha256 so the blob digest is computed in-flight."""
+
+    def __init__(self, fobj):
+        self.fobj = fobj
+        self.sha = hashlib.sha256()
+        self.size = 0
+
+    def write(self, data):
+        self.sha.update(data)
+        self.size += len(data)
+        return self.fobj.write(data)
+
+
 def make_layer(blobs_dir: str, tar_path: str):
     """
     diff_id is the digest of the *uncompressed* tar (referenced by the config);
     the descriptor digest is the *compressed* blob (referenced by the manifest).
+    Both are computed streaming so large layers are never held in memory.
     """
+    diff = hashlib.sha256()
+    tmp = os.path.join(blobs_dir, ".incoming-layer")
     with open(tar_path, "rb") as f:
-        raw = f.read()
-    if raw[:2] == b"\x1f\x8b":
-        raw = gzip.decompress(raw)
-    diff_id = "sha256:" + sha256_hex(raw)
-    gz = gzip.compress(raw, compresslevel=6, mtime=0)
-    return write_blob(blobs_dir, gz, OCI_LAYER), diff_id
+        gzipped = f.read(2) == b"\x1f\x8b"
+        f.seek(0)
+        src = gzip.GzipFile(fileobj=f, mode="rb") if gzipped else f
+        with open(tmp, "wb") as out:
+            writer = HashingWriter(out)
+            # filename="" and mtime=0 zero out the gzip header, so the
+            # compressed blob is reproducible.
+            with gzip.GzipFile(
+                filename="", fileobj=writer, mode="wb", compresslevel=6, mtime=0
+            ) as gz:
+                while chunk := src.read(1 << 20):
+                    diff.update(chunk)
+                    gz.write(chunk)
+    digest = writer.sha.hexdigest()
+    os.replace(tmp, os.path.join(blobs_dir, digest))
+    desc = {
+        "mediaType": OCI_LAYER,
+        "digest": "sha256:" + digest,
+        "size": writer.size,
+    }
+    return desc, "sha256:" + diff.hexdigest()
 
 
 def build(args):

@@ -31,11 +31,16 @@ def collect(src, arcname, mode, members):
     rather than links into the build sandbox.
     """
     src = os.path.realpath(src)
+    prev = members.get(arcname)
     if os.path.isdir(src):
+        if prev is not None and prev[0] is not None:
+            raise ValueError(f"Archive path collision at {arcname}: file vs directory")
         members.setdefault(arcname, (None, None))
         for name in sorted(os.listdir(src)):
             collect(os.path.join(src, name), arcname + "/" + name, None, members)
     else:
+        if prev is not None and prev != (src, mode):
+            raise ValueError(f"Archive path collision at {arcname}")
         members[arcname] = (src, mode)
 
 
@@ -47,6 +52,8 @@ def create_tar(manifest, compress, filename):
     # Synthesise parent directories so the layer carries explicit entries.
     for arcname in list(members):
         for parent in parents(arcname):
+            if members.get(parent, (None, None))[0] is not None:
+                raise ValueError(f"Archive path collision at {parent}: file vs directory")
             members.setdefault(parent, (None, None))
 
     raw_fobj = gz = None
@@ -74,6 +81,8 @@ def create_tar(manifest, compress, filename):
             ti = reset(tar.gettarinfo(src, arcname))
             if mode:
                 ti.mode = int(mode, 8)
+            elif ti.isreg():
+                ti.mode = 0o755 if ti.mode & 0o111 else 0o644
             if ti.isreg():
                 with open(src, "rb") as f:
                     tar.addfile(ti, f)
@@ -112,6 +121,6 @@ if __name__ == "__main__":
 
     try:
         create_tar(read_manifest(args.manifest), args.compress, args.filename)
-    except FileNotFoundError as e:
+    except (FileNotFoundError, ValueError) as e:
         print(e, file=sys.stderr)
         sys.exit(1)
