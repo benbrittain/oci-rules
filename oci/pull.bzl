@@ -9,7 +9,7 @@ def _oci_pull_impl(ctx: AnalysisContext) -> list[Provider]:
         "pull",
         "--format=oci",
         "--platform",
-        ctx.attrs.platforms[0],
+        ctx.attrs.platform,
         "{}@{}".format(ctx.attrs.image, ctx.attrs.digest),
         output.as_output(),
     )
@@ -23,7 +23,7 @@ oci_pull = rule(
     attrs = {
         "digest": attrs.string(),
         "image": attrs.string(),
-        "platforms": attrs.list(attrs.string()),
+        "platform": attrs.string(),
         "_oci_toolchain": attrs.toolchain_dep(
             default = "toolchains//:oci",
             providers = [OciToolchainInfo],
