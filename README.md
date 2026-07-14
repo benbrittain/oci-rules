@@ -30,9 +30,9 @@ load("@oci//oci:toolchain.bzl", "oci_toolchain", "download_crane_binary")
 load("@oci//tar:toolchain.bzl", "tar_toolchain")
 
 # Optional helper macro for fetching the crane binary based on platform arch
-download_crane_binary(                      
-    name = "crane",                         
-    version = "0.19.1",                     
+download_crane_binary(
+    name = "crane",
+    version = "0.21.7",
 )
 
 # Register the mandatory toolchain
